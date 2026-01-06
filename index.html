@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bible Order Challenge - 5 Min</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f1f2f6;
+        }
+
+        html, body { overflow: hidden; height: 100%; touch-action: manipulation; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; }
+
+        #start-screen {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: var(--primary); color: white; z-index: 5000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
+        }
+
+        .header { background: white; padding: 10px 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .stats { display: flex; gap: 15px; font-weight: 800; font-size: 1.1rem; }
+        
+        #timer.warning { color: var(--error); animation: blink 0.5s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
+
+        .progress-container { width: 100%; background: #eee; height: 8px; border-radius: 4px; margin-top: 10px; }
+        #progress-bar { width: 0%; height: 100%; background: var(--success); transition: width 0.4s; }
+
+        button { padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
+        button:active { transform: scale(0.95); }
+        .btn-reset { background: var(--primary); color: white; }
+        .btn-submit { background: var(--success); color: white; }
+
+        .game-container { display: flex; flex-direction: column; flex: 1; padding: 10px; gap: 15px; overflow: hidden; }
+        .section-title { font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; font-weight: bold; letter-spacing: 1px; }
+
+        /* Target Area */
+        #target-container { flex: 1.5; display: flex; flex-direction: column; background: #fff; border-radius: 12px; padding: 10px; border: 1px solid #ddd; }
+        #target-list {
+            flex: 1; overflow-y: auto; display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+            gap: 8px; align-content: start; min-height: 100px;
+        }
+
+        /* Pool Area (6 Rows) */
+        #pool-container { height: 260px; display: flex; flex-direction: column; background: #dfe6e9; border-radius: 12px; padding: 10px; border: 1px solid #b2bec3; }
+        #source-list {
+            flex: 1; display: grid; grid-template-rows: repeat(6, 1fr);
+            grid-auto-flow: column; gap: 8px; overflow-x: auto; padding-bottom: 10px;
+        }
+
+        .book-card {
+            background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #ccc;
+            text-align: center; font-size: 0.85rem; min-width: 110px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); touch-action: none;
+            user-select: none;
+        }
+
+        .correct { background-color: #e8f5e9 !important; border-color: #27ae60 !important; color: #1b5e20; font-weight: bold; }
+        .incorrect { background-color: #ffebee !important; border-color: #e74c3c !important; }
+
+        #message-overlay {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            padding: 30px; background: white; border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4); z-index: 6000;
+            text-align: center; display: none; width: 85%;
+        }
+        .overlay-bg { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index: 5999; display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>Bible Order Challenge</h1>
+        <p>You have 5 minutes to arrange all 66 books.<br>Will you beat the clock?</p>
+        <button class="btn-submit" style="font-size: 1.4rem; padding: 15px 40px; margin-top: 20px;" onclick="startGame()">START GAME</button>
+    </div>
+
+    <div class="header">
+        <div class="header-top">
+            <button class="btn-reset" onclick="resetGame()">Reset</button>
+            <div class="stats">
+                <div id="timer">05:00</div>
+                <div>Tries: <span id="tries">3</span></div>
+            </div>
+            <button id="submit-btn" class="btn-submit" onclick="checkOrder()">Check Order</button>
+        </div>
+        <div class="progress-container"><div id="progress-bar"></div></div>
+    </div>
+
+    <div class="overlay-bg" id="overlay-bg"></div>
+    <div id="message-overlay">
+        <h2 id="msg-text"></h2>
+        <button class="btn-reset" style="width: 100%; padding: 15px;" onclick="hideMessage()">Continue</button>
+    </div>
+
+    <div class="game-container">
+        <div id="target-container">
+            <div class="section-title">Your Arrangement (1-66)</div>
+            <div id="target-list"></div>
+        </div>
+
+        <div id="pool-container">
+            <div class="section-title">Book Pool (Swipe Left/Right)</div>
+            <div id="source-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const books = ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther", "Job", "Psalms", "Proverbs", "Ecclesiastes", "Song of Solomon", "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi", "Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"];
+
+        let timeLeft = 300; // 5 Minutes
+        let triesLeft = 3;
+        let timerInterval;
+        let gameActive = false;
+        let audioCtx;
+
+        function playBeep(freq = 440, duration = 0.08) {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.start(); osc.stop(audioCtx.currentTime + duration);
+            } catch(e) { console.log("Audio play blocked"); }
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            initGame();
+        }
+
+        function initGame() {
+            gameActive = true;
+            timeLeft = 300;
+            triesLeft = 3;
+            document.getElementById('progress-bar').style.width = "0%";
+            document.getElementById('submit-btn').disabled = false;
+            hideMessage();
+            updateStats();
+
+            const source = document.getElementById('source-list');
+            const target = document.getElementById('target-list');
+            source.innerHTML = ''; target.innerHTML = '';
+
+            [...books].sort(() => Math.random() - 0.5).forEach(b => {
+                const div = document.createElement('div');
+                div.className = 'book-card';
+                div.textContent = b;
+                div.setAttribute('data-name', b);
+                source.appendChild(div);
+            });
+
+            const config = { 
+                group: 'bible', 
+                animation: 250, 
+                delay: 80, 
+                delayOnTouchOnly: true,
+                forceFallback: false,
+                onEnd: function (evt) {
+                    if (evt.to.id === 'source-list' && evt.from.id === 'target-list') {
+                        // User moved item back to pool manually
+                    }
+                }
+            };
+
+            new Sortable(source, config);
+            new Sortable(target, config);
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (!gameActive) return;
+                timeLeft--;
+                updateStats();
+                if (timeLeft <= 30 && timeLeft > 0) playBeep(1000, 0.05); 
+                if (timeLeft <= 0) endGame(false, "Time's Up!");
+            }, 1000);
+        }
+
+        function updateStats() {
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            const timerEl = document.getElementById('timer');
+            timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+            document.getElementById('tries').textContent = triesLeft;
+            if (timeLeft <= 30) timerEl.classList.add('warning');
+            else timerEl.classList.remove('warning');
+        }
+
+        function checkOrder() {
+            if (!gameActive) return;
+            const items = Array.from(document.getElementById('target-list').children);
+            let correctCount = 0;
+
+            items.forEach((el, i) => {
+                if (el.getAttribute('data-name') === books[i]) {
+                    el.classList.add('correct');
+                    el.classList.remove('incorrect');
+                    correctCount++;
+                } else {
+                    el.classList.add('incorrect');
+                    el.classList.remove('correct');
+                }
+            });
+
+            document.getElementById('progress-bar').style.width = `${(correctCount/66)*100}%`;
+
+            if (correctCount === 66) {
+                endGame(true, "Well done!");
+            } else {
+                triesLeft--;
+                updateStats();
+                if (triesLeft <= 0) endGame(false, "No tries left! Better luck next time.");
+                else showMessage(`Not quite! ${correctCount} of 66 books are in the correct position.`);
+            }
+        }
+
+        function showMessage(t) {
+            document.getElementById('msg-text').textContent = t;
+            document.getElementById('message-overlay').style.display = "block";
+            document.getElementById('overlay-bg').style.display = "block";
+        }
+
+        function hideMessage() {
+            document.getElementById('message-overlay').style.display = "none";
+            document.getElementById('overlay-bg').style.display = "none";
+        }
+
+        function endGame(success, t) {
+            gameActive = false;
+            clearInterval(timerInterval);
+            showMessage(success ? "Well done!" : t);
+            document.getElementById('submit-btn').disabled = true;
+        }
+
+        function resetGame() { initGame(); }
+    </script>
+</body>
+</html>
