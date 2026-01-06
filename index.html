@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bible Order Challenge - 5 Min</title>
+    <title>Bible Order Challenge</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -11,68 +11,90 @@
             --accent: #3498db;
             --success: #27ae60;
             --error: #e74c3c;
-            --bg: #f1f2f6;
+            --bg: #f8f9fa;
         }
 
-        html, body { overflow: hidden; height: 100%; touch-action: manipulation; }
+        html, body { overflow: hidden; height: 100%; touch-action: manipulation; -webkit-user-select: none; }
         body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; }
 
+        /* Start Screen Overlay */
         #start-screen {
             position: fixed; top:0; left:0; width:100%; height:100%;
             background: var(--primary); color: white; z-index: 5000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 20px;
+            text-align: center;
         }
 
-        .header { background: white; padding: 10px 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; }
+        /* Header UI */
+        .header { background: white; padding: 12px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; }
         .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .stats { display: flex; gap: 15px; font-weight: 800; font-size: 1.1rem; }
+        .stats { display: flex; gap: 20px; font-weight: 800; font-size: 1.1rem; }
         
         #timer.warning { color: var(--error); animation: blink 0.5s infinite; }
-        @keyframes blink { 50% { opacity: 0.3; } }
+        @keyframes blink { 50% { opacity: 0.2; } }
 
-        .progress-container { width: 100%; background: #eee; height: 8px; border-radius: 4px; margin-top: 10px; }
+        .progress-container { width: 100%; background: #eee; height: 6px; border-radius: 3px; margin-top: 10px; }
         #progress-bar { width: 0%; height: 100%; background: var(--success); transition: width 0.4s; }
 
-        button { padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
-        button:active { transform: scale(0.95); }
+        button { padding: 10px 18px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         .btn-reset { background: var(--primary); color: white; }
         .btn-submit { background: var(--success); color: white; }
 
-        .game-container { display: flex; flex-direction: column; flex: 1; padding: 10px; gap: 15px; overflow: hidden; }
-        .section-title { font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; margin-bottom: 5px; font-weight: bold; letter-spacing: 1px; }
+        /* Game Layout */
+        .game-container { display: flex; flex-direction: column; flex: 1; padding: 10px; gap: 10px; overflow: hidden; }
+        .section-label { font-size: 0.7rem; text-transform: uppercase; color: #95a5a6; font-weight: bold; margin-bottom: 4px; }
 
-        /* Target Area */
-        #target-container { flex: 1.5; display: flex; flex-direction: column; background: #fff; border-radius: 12px; padding: 10px; border: 1px solid #ddd; }
+        /* Target List Grid */
+        #target-container { flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 12px; padding: 10px; border: 1px solid #ddd; }
         #target-list {
             flex: 1; overflow-y: auto; display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
-            gap: 8px; align-content: start; min-height: 100px;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 6px; align-content: start;
         }
 
-        /* Pool Area (6 Rows) */
-        #pool-container { height: 260px; display: flex; flex-direction: column; background: #dfe6e9; border-radius: 12px; padding: 10px; border: 1px solid #b2bec3; }
+        /* Pool Area (Specific 2-Row Request) */
+        #pool-container { 
+            height: 140px; 
+            background: #ecf0f1; 
+            border-radius: 12px; 
+            padding: 10px; 
+            border: 1px solid #bdc3c7;
+            display: flex;
+            flex-direction: column;
+        }
         #source-list {
-            flex: 1; display: grid; grid-template-rows: repeat(6, 1fr);
-            grid-auto-flow: column; gap: 8px; overflow-x: auto; padding-bottom: 10px;
+            flex: 1; display: grid; 
+            grid-template-rows: repeat(2, 1fr); /* FORCED 2 ROWS */
+            grid-auto-flow: column; 
+            gap: 8px; 
+            overflow-x: auto; 
+            padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
         }
 
+        /* Book Card Styling */
         .book-card {
             background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #ccc;
-            text-align: center; font-size: 0.85rem; min-width: 110px; height: 32px;
+            text-align: center; font-size: 0.8rem; min-width: 100px; height: 36px;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05); touch-action: none;
-            user-select: none;
+            transition: transform 0.1s;
         }
 
-        .correct { background-color: #e8f5e9 !important; border-color: #27ae60 !important; color: #1b5e20; font-weight: bold; }
-        .incorrect { background-color: #ffebee !important; border-color: #e74c3c !important; }
+        /* Removing Apparent Drag (The Ghost Effect) */
+        .sortable-ghost { opacity: 0 !important; } /* Makes the original spot invisible while moving */
+        .sortable-drag { opacity: 1 !important; transform: scale(1.05); box-shadow: 0 10px 20px rgba(0,0,0,0.2); } /* The item under finger */
 
+        /* Feedback States */
+        .correct { background-color: #d4edda !important; border-color: #28a745 !important; color: #155724; font-weight: bold; }
+        .incorrect { background-color: #f8d7da !important; border-color: #dc3545 !important; }
+
+        /* Overlays */
         #message-overlay {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             padding: 30px; background: white; border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.4); z-index: 6000;
-            text-align: center; display: none; width: 85%;
+            text-align: center; display: none; width: 80%;
         }
         .overlay-bg { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index: 5999; display: none; }
     </style>
@@ -80,9 +102,9 @@
 <body>
 
     <div id="start-screen">
-        <h1>Bible Order Challenge</h1>
-        <p>You have 5 minutes to arrange all 66 books.<br>Will you beat the clock?</p>
-        <button class="btn-submit" style="font-size: 1.4rem; padding: 15px 40px; margin-top: 20px;" onclick="startGame()">START GAME</button>
+        <h1>Bible Challenge</h1>
+        <p>Arrange 66 books in 5 minutes</p>
+        <button class="btn-submit" style="font-size: 1.2rem; margin-top:15px;" onclick="startGame()">TAP TO START</button>
     </div>
 
     <div class="header">
@@ -92,7 +114,7 @@
                 <div id="timer">05:00</div>
                 <div>Tries: <span id="tries">3</span></div>
             </div>
-            <button id="submit-btn" class="btn-submit" onclick="checkOrder()">Check Order</button>
+            <button id="submit-btn" class="btn-submit" onclick="checkOrder()">Check</button>
         </div>
         <div class="progress-container"><div id="progress-bar"></div></div>
     </div>
@@ -100,17 +122,17 @@
     <div class="overlay-bg" id="overlay-bg"></div>
     <div id="message-overlay">
         <h2 id="msg-text"></h2>
-        <button class="btn-reset" style="width: 100%; padding: 15px;" onclick="hideMessage()">Continue</button>
+        <button class="btn-reset" style="width: 100%; padding: 12px;" onclick="hideMessage()">Continue</button>
     </div>
 
     <div class="game-container">
         <div id="target-container">
-            <div class="section-title">Your Arrangement (1-66)</div>
+            <div class="section-label">Your List (Order 1-66)</div>
             <div id="target-list"></div>
         </div>
 
         <div id="pool-container">
-            <div class="section-title">Book Pool (Swipe Left/Right)</div>
+            <div class="section-label">Book Pool (2 Rows - Scroll Side-to-Side)</div>
             <div id="source-list"></div>
         </div>
     </div>
@@ -118,24 +140,23 @@
     <script>
         const books = ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther", "Job", "Psalms", "Proverbs", "Ecclesiastes", "Song of Solomon", "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi", "Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"];
 
-        let timeLeft = 300; // 5 Minutes
+        let timeLeft = 300;
         let triesLeft = 3;
         let timerInterval;
         let gameActive = false;
         let audioCtx;
 
-        function playBeep(freq = 440, duration = 0.08) {
+        function playBeep(freq = 1000) {
             try {
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain); gain.connect(audioCtx.destination);
                 osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-                osc.start(); osc.stop(audioCtx.currentTime + duration);
-            } catch(e) { console.log("Audio play blocked"); }
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {}
         }
 
         function startGame() {
@@ -164,28 +185,28 @@
                 source.appendChild(div);
             });
 
-            const config = { 
+            // Mobile specific movement adjustment
+            const sortConfig = { 
                 group: 'bible', 
-                animation: 250, 
-                delay: 80, 
+                animation: 200, 
+                delay: 50, // Short delay for touch to differentiate from scroll
                 delayOnTouchOnly: true,
-                forceFallback: false,
-                onEnd: function (evt) {
-                    if (evt.to.id === 'source-list' && evt.from.id === 'target-list') {
-                        // User moved item back to pool manually
-                    }
-                }
+                touchStartThreshold: 3,
+                ghostClass: 'sortable-ghost', // Makes origin invisible
+                dragClass: 'sortable-drag',   // Item under finger stays solid/vibrant
+                forceFallback: true,          // Better control on mobile devices
+                fallbackTolerance: 3          // Prevents jitter
             };
 
-            new Sortable(source, config);
-            new Sortable(target, config);
+            new Sortable(source, sortConfig);
+            new Sortable(target, sortConfig);
 
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 if (!gameActive) return;
                 timeLeft--;
                 updateStats();
-                if (timeLeft <= 30 && timeLeft > 0) playBeep(1000, 0.05); 
+                if (timeLeft <= 30 && timeLeft > 0) playBeep(); 
                 if (timeLeft <= 0) endGame(false, "Time's Up!");
             }, 1000);
         }
@@ -223,8 +244,8 @@
             } else {
                 triesLeft--;
                 updateStats();
-                if (triesLeft <= 0) endGame(false, "No tries left! Better luck next time.");
-                else showMessage(`Not quite! ${correctCount} of 66 books are in the correct position.`);
+                if (triesLeft <= 0) endGame(false, "Out of Tries!");
+                else showMessage(`Incorrect. ${correctCount}/66 placed correctly.`);
             }
         }
 
