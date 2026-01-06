@@ -14,221 +14,150 @@
             --bg: #f0f2f5;
         }
 
-        html, body { 
-            overflow: hidden; 
-            height: 100%; 
-            touch-action: none; 
-            -webkit-user-select: none;
-            user-select: none;
-        }
+        html, body { overflow: hidden; height: 100%; touch-action: none; -webkit-user-select: none; user-select: none; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; }
 
-        body { 
-            font-family: -apple-system, system-ui, sans-serif; 
-            background-color: var(--bg); 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-        }
-
+        /* Multi-Level Start Screen */
         #start-screen {
             position: fixed; top:0; left:0; width:100%; height:100%;
             background: var(--primary); color: white; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
         }
 
-        .header { background: white; padding: 12px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .level-btn {
+            width: 220px; padding: 15px; margin: 10px; border-radius: 10px; border: none;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; transition: 0.2s;
+        }
+        .btn-beginner { background: var(--success); }
+        .btn-intermediate { background: #f39c12; }
+        .btn-expert { background: var(--error); }
+        .level-btn:active { transform: scale(0.95); }
+
+        /* Header UI */
+        .header { background: white; padding: 12px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; position: relative; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; padding-right: 40px; }
         .stats { display: flex; gap: 15px; font-weight: 800; font-size: 1.1rem; }
         
         #timer.warning { color: var(--error); animation: blink 0.5s infinite; }
         @keyframes blink { 50% { opacity: 0.2; } }
 
+        /* Right Side Menu */
+        .menu-trigger {
+            position: absolute; right: 15px; top: 15px; font-size: 1.5rem; cursor: pointer;
+            padding: 5px; color: var(--primary);
+        }
+        #side-menu {
+            position: fixed; right: -250px; top: 0; width: 220px; height: 100%;
+            background: white; box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+            z-index: 10000; transition: 0.3s; padding: 20px;
+        }
+        #side-menu.open { right: 0; }
+        #side-menu h3 { font-size: 0.9rem; color: #7f8c8d; margin-top: 40px; }
+        .menu-close { position: absolute; left: 15px; top: 15px; font-size: 1.2rem; cursor: pointer; }
+
         .progress-container { width: 100%; background: #eee; height: 6px; border-radius: 3px; margin-top: 10px; }
         #progress-bar { width: 0%; height: 100%; background: var(--success); transition: width 0.4s; }
 
-        button { padding: 10px 18px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        button.ui-btn { padding: 10px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         .btn-reset { background: var(--primary); color: white; }
         .btn-submit { background: var(--success); color: white; }
 
-        .game-container { 
-            display: flex; 
-            flex-direction: row; 
-            flex: 1; 
-            padding: 10px; 
-            gap: 10px; 
-            overflow: hidden; 
-        }
+        .game-container { display: flex; flex: 1; padding: 10px; gap: 10px; overflow: hidden; }
 
-        /* Arrangement Area (Left) */
-        #target-container { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            background: #fff; 
-            border-radius: 12px; 
-            padding: 10px; 
-            border: 1px solid #ddd; 
-            overflow: hidden;
-            counter-reset: book-counter; /* Initialize counter */
-        }
+        /* Arrangement Area */
+        #target-container { flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 12px; padding: 10px; border: 1px solid #ddd; overflow: hidden; counter-reset: book-counter; }
+        #target-list { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; align-content: start; touch-action: pan-y; padding-bottom: 20px; }
+
+        /* Sidebar Pool */
+        #pool-container { width: 110px; background: #dfe6e9; border-radius: 12px; padding: 10px 5px; border: 1px solid #bdc3c7; display: flex; flex-direction: column; overflow: hidden; }
+        #source-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 30px; touch-action: pan-y; }
+
+        /* Book Card */
+        .book-card { background: #fff; padding: 10px 4px; border-radius: 8px; border: 1px solid #ccc; text-align: center; font-size: 0.8rem; min-height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; }
         
-        #target-list {
-            flex: 1; 
-            overflow-y: auto; 
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
-            gap: 10px; 
-            align-content: start;
-            touch-action: pan-y;
-            padding-bottom: 20px;
-        }
-
-        /* Sidebar Pool (Right) */
-        #pool-container { 
-            width: 110px; 
-            background: #dfe6e9; 
-            border-radius: 12px; 
-            padding: 10px 5px; 
-            border: 1px solid #bdc3c7;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        #source-list {
-            flex: 1; 
-            overflow-y: auto; 
-            display: flex;
-            flex-direction: column;
-            gap: 8px; 
-            padding-bottom: 30px;
-            touch-action: pan-y;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* Book Card Styling */
-        .book-card {
-            background: #fff; 
-            padding: 10px 4px; 
-            border-radius: 8px; 
-            border: 1px solid #ccc;
-            text-align: center; 
-            font-size: 0.8rem; 
-            min-height: 44px;
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: relative;
-        }
-
-        /* Position Label Logic */
         #target-list .book-card::before {
-            counter-increment: book-counter;
-            content: counter(book-counter);
-            position: absolute;
-            top: -6px;
-            left: -6px;
-            background: var(--primary);
-            color: white;
-            font-size: 0.65rem;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            z-index: 2;
+            counter-increment: book-counter; content: counter(book-counter);
+            position: absolute; top: -6px; left: -6px; background: var(--primary);
+            color: white; font-size: 0.65rem; width: 18px; height: 18px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 2;
         }
 
         .sortable-ghost { opacity: 0 !important; } 
-        .sortable-drag { 
-            opacity: 1 !important; 
-            transform: scale(1.1); 
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3); 
-            z-index: 10000 !important;
-            background: var(--accent) !important;
-            color: white !important;
-        }
+        .sortable-drag { opacity: 1 !important; transform: scale(1.1); box-shadow: 0 15px 30px rgba(0,0,0,0.3); z-index: 10000 !important; background: var(--accent) !important; color: white !important; }
 
         .correct { background-color: #d4edda !important; border-color: #28a745 !important; color: #155724; font-weight: bold; }
         .incorrect { background-color: #f8d7da !important; border-color: #dc3545 !important; }
 
-        #message-overlay {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            padding: 30px; background: white; border-radius: 20px;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.4); z-index: 9000;
-            text-align: center; display: none; width: 75%;
-        }
-        .overlay-bg { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index: 8999; display: none; }
+        #message-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px; background: white; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.4); z-index: 11000; text-align: center; display: none; width: 75%; }
+        .overlay-bg { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index: 10999; display: none; }
     </style>
 </head>
 <body>
 
     <div id="start-screen">
-        <h1>Bible Order Challenge</h1>
-        <p>5 Minutes | 66 Books</p>
-        <button class="btn-submit" style="font-size: 1.2rem; margin-top:20px;" onclick="startGame()">START GAME</button>
+        <h1>Bible Challenge</h1>
+        <p>Select Your Difficulty Level:</p>
+        <button class="level-btn btn-beginner" onclick="startGame(720, 'Beginner')">Beginner (12m)</button>
+        <button class="level-btn btn-intermediate" onclick="startGame(480, 'Intermediate')">Intermediate (8m)</button>
+        <button class="level-btn btn-expert" onclick="startGame(300, 'Expert')">Expert (5m)</button>
+    </div>
+
+    <div id="side-menu">
+        <div class="menu-close" onclick="toggleMenu()">✕</div>
+        <h3>CHANGE LEVEL</h3>
+        <button class="level-btn btn-beginner" style="width:100%" onclick="resetToLevel(720, 'Beginner')">Beginner</button>
+        <button class="level-btn btn-intermediate" style="width:100%" onclick="resetToLevel(480, 'Intermediate')">Intermediate</button>
+        <button class="level-btn btn-expert" style="width:100%" onclick="resetToLevel(300, 'Expert')">Expert</button>
     </div>
 
     <div class="header">
+        <div class="menu-trigger" onclick="toggleMenu()">☰</div>
         <div class="header-top">
-            <button class="btn-reset" onclick="resetGame()">Reset</button>
+            <button class="ui-btn btn-reset" onclick="initGame()">Reset</button>
             <div class="stats">
-                <div id="timer">05:00</div>
+                <div id="timer">00:00</div>
                 <div>Tries: <span id="tries">3</span></div>
             </div>
-            <button id="submit-btn" class="btn-submit" onclick="checkOrder()">Check</button>
+            <button id="submit-btn" class="ui-btn btn-submit" onclick="checkOrder()">Check</button>
         </div>
         <div class="progress-container"><div id="progress-bar"></div></div>
     </div>
 
-    <div class="overlay-bg" id="overlay-bg"></div>
+    <div class="overlay-bg" id="overlay-bg" onclick="hideMessage()"></div>
     <div id="message-overlay">
         <h2 id="msg-text"></h2>
-        <button class="btn-reset" style="width: 100%; padding: 12px;" onclick="hideMessage()">Continue</button>
+        <button class="ui-btn btn-reset" style="width: 100%; padding: 12px;" onclick="hideMessage()">Continue</button>
     </div>
 
     <div class="game-container">
-        <div id="target-container">
-            <div id="target-list"></div>
-        </div>
-
-        <div id="pool-container">
-            <div id="source-list"></div>
-        </div>
+        <div id="target-container"><div id="target-list"></div></div>
+        <div id="pool-container"><div id="source-list"></div></div>
     </div>
 
     <script>
         const books = ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther", "Job", "Psalms", "Proverbs", "Ecclesiastes", "Song of Solomon", "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi", "Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"];
 
-        let timeLeft = 300;
-        let triesLeft = 3;
-        let timerInterval;
-        let gameActive = false;
+        let timeLeft, initialTime, triesLeft, timerInterval, gameActive = false, currentLevelName = '';
         let audioCtx;
 
-        function playBeep() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.frequency.value = 1100;
-                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } catch(e) {}
-        }
+        function toggleMenu() { document.getElementById('side-menu').classList.toggle('open'); }
 
-        function startGame() {
+        function startGame(seconds, level) {
+            initialTime = seconds;
+            currentLevelName = level;
             document.getElementById('start-screen').style.display = 'none';
             initGame();
         }
 
+        function resetToLevel(seconds, level) {
+            toggleMenu();
+            startGame(seconds, level);
+        }
+
         function initGame() {
             gameActive = true;
-            timeLeft = 300;
+            timeLeft = initialTime;
             triesLeft = 3;
             document.getElementById('progress-bar').style.width = "0%";
             document.getElementById('submit-btn').disabled = false;
@@ -247,19 +176,7 @@
                 source.appendChild(div);
             });
 
-            const config = { 
-                group: 'bible', 
-                animation: 250, 
-                delay: 150, 
-                delayOnTouchOnly: true,
-                touchStartThreshold: 10,
-                ghostClass: 'sortable-ghost',
-                dragClass: 'sortable-drag',
-                forceFallback: true,
-                fallbackOnBody: true,
-                fallbackTolerance: 5
-            };
-
+            const config = { group: 'bible', animation: 250, delay: 150, delayOnTouchOnly: true, touchStartThreshold: 10, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', forceFallback: true, fallbackOnBody: true };
             new Sortable(source, config);
             new Sortable(target, config);
 
@@ -286,29 +203,31 @@
         function checkOrder() {
             if (!gameActive) return;
             const items = Array.from(document.getElementById('target-list').children);
-            let correctCount = 0;
-
+            let correct = 0;
             items.forEach((el, i) => {
-                if (el.getAttribute('data-name') === books[i]) {
-                    el.classList.add('correct');
-                    el.classList.remove('incorrect');
-                    correctCount++;
-                } else {
-                    el.classList.add('incorrect');
-                    el.classList.remove('correct');
-                }
+                if (el.getAttribute('data-name') === books[i]) { el.classList.add('correct'); el.classList.remove('incorrect'); correct++; }
+                else { el.classList.add('incorrect'); el.classList.remove('correct'); }
             });
-
-            document.getElementById('progress-bar').style.width = `${(correctCount/66)*100}%`;
-
-            if (correctCount === 66) {
-                endGame(true, "Well done!");
-            } else {
-                triesLeft--;
-                updateStats();
+            document.getElementById('progress-bar').style.width = `${(correct/66)*100}%`;
+            if (correct === 66) endGame(true, "Well done!");
+            else {
+                triesLeft--; updateStats();
                 if (triesLeft <= 0) endGame(false, "Out of Tries!");
-                else showMessage(`Incorrect. ${correctCount}/66 placed.`);
+                else showMessage(`Incorrect. ${correct}/66 correct.`);
             }
+        }
+
+        function playBeep() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.frequency.value = 1100;
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {}
         }
 
         function showMessage(t) {
@@ -317,19 +236,13 @@
             document.getElementById('overlay-bg').style.display = "block";
         }
 
-        function hideMessage() {
-            document.getElementById('message-overlay').style.display = "none";
-            document.getElementById('overlay-bg').style.display = "none";
-        }
+        function hideMessage() { document.getElementById('message-overlay').style.display = "none"; document.getElementById('overlay-bg').style.display = "none"; }
 
         function endGame(success, t) {
-            gameActive = false;
-            clearInterval(timerInterval);
+            gameActive = false; clearInterval(timerInterval);
             showMessage(success ? "Well done!" : t);
             document.getElementById('submit-btn').disabled = true;
         }
-
-        function resetGame() { initGame(); }
     </script>
 </body>
 </html>
